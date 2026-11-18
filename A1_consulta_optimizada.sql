@@ -73,6 +73,7 @@ registros NULL tampoco cumplen la condicion de activo = 'S'.
 
 Se puede utilizar directamente c.activo = 'S'.
 
+
 PROBLEMA 5: USO DE IN
 
 La condicion IN puede reemplazarse por EXISTS para expresar

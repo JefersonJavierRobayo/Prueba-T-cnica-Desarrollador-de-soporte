@@ -16,6 +16,7 @@ Por esta razón, se requiere identificar los registros potencialmente
 inconsistentes,revisar su información y preparar una corrección controlada
 que permita validar los resultados antes de confirmar los cambios.
 
+
 Objetivo
 
 1. Identificar las solicitudes que se encuentran en estado PROCESADA y 

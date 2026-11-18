@@ -15,6 +15,7 @@ Objetivo:
 5. Evitar COMMIT dentro del procedimiento.
 6. Propagar los errores para facilitar su diagnóstico.
 
+
 Nota:
 El procedimiento no realiza COMMIT. La transacción queda
 bajo responsabilidad del proceso que lo invoque.

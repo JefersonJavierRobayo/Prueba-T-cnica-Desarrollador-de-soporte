@@ -12,6 +12,7 @@ public SolicitudDto consultar(Long id) {
  ultima.getFechaGestion()
  );
 }
+
 Log observado:
 2026-11-06 09:42:11 ERROR SolicitudController - Error consultando solicitud id=781245
 java.lang.NullPointerException: Cannot invoke "Solicitud.getCliente()" because "solicitud" is null
