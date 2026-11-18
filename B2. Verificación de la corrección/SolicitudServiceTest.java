@@ -80,6 +80,7 @@ class SolicitudServiceTest {
         verify(gestionRepository, never())
             .findBySolicitudId(anyLong());
     }
+    
 
     @Test
     void consultarSolicitudSinGestiones() {

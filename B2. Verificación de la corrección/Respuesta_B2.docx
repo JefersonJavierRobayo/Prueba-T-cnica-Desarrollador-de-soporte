@@ -9,6 +9,7 @@ Para ello, se plantean pruebas automatizadas que validan tanto los escenarios no
  como los escenarios de error, utilizando JUnit 5 y Mockito para simular las respuestas 
  de los repositorios sin depender de una conexión real a la base de datos.
 
+
 2. Casos de prueba propuestos
 Se plantean los siguientes escenarios:
 ID	    Escenario	Resultado esperado

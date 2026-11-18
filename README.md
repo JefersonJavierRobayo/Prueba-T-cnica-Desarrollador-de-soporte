@@ -5,7 +5,6 @@
 **Candidato:** Jeferson Javier Robayo Sandoval  
 **Lenguaje:** Java,SQL,PL/SQL 
 **Herramientas:** Visual Studio Code
-
 ---
 
 ## 1. Descripción del proyecto
