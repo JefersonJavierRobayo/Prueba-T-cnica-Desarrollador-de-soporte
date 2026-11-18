@@ -1,0 +1,114 @@
+9. Explique qué hace el método y por qué puede fallar.
+El servicio que consulta una solicitud contiene el siguiente fragmento simplificado:
+public SolicitudDto consultar(Long id) {
+ Solicitud solicitud = repository.findById(id).orElse(null);
+ String nombreCliente = solicitud.getCliente().getNombre().trim();
+ List<Gestion> gestiones = gestionRepository.findBySolicitudId(id);
+ Gestion ultima = gestiones.get(0);
+ return new SolicitudDto(
+ solicitud.getId(),
+ nombreCliente,
+ solicitud.getEstado(),
+ ultima.getFechaGestion()
+ );
+}
+Log observado:
+2026-11-06 09:42:11 ERROR SolicitudController - Error consultando solicitud id=781245
+java.lang.NullPointerException: Cannot invoke "Solicitud.getCliente()" because "solicitud" is null
+ at SolicitudService.consultar(SolicitudService.java:42)
+===============================================================================================
+El método `consultar(Long id)` tiene como finalidad consultar una solicitud 
+mediante su identificador y construir un 
+objeto `SolicitudDto` con la información correspondiente: identificador de la 
+solicitud, nombre del cliente, estado actual y fecha de la última gestión realizada.
+
+Para cumplir este objetivo, primero consulta la solicitud en el repositorio, 
+obtiene los datos del cliente asociado, consulta las gestiones relacionadas y 
+finalmente toma la primera gestión de la lista para obtener su fecha.
+
+El error reportado ocurre porque se utiliza `orElse(null)` al consultar la solicitud. 
+Cuando el identificador no existe en la base de datos, el repositorio devuelve un valor 
+`null`. Posteriormente, al ejecutar `solicitud.getCliente()`, se intenta acceder a un 
+atributo de un objeto nulo, generando una excepción `NullPointerException`.
+
+Por lo tanto, es necesario validar la existencia de la solicitud antes de intentar 
+acceder a sus propiedades.
+===========================================================================================
+### 10. Identifique al menos tres situaciones problemáticas o frágiles en el fragmento.
+
+Se identifican las siguientes situaciones problemáticas:
+
+| N.º | Situación problemática | Posible consecuencia |
+|---|---|---|
+| 1 | Se utiliza `orElse(null)` sin validar el resultado. | Puede generar un `NullPointerException` cuando la solicitud no existe. |
+| 2 | No se valida si el cliente asociado es nulo. | Puede producir un error al intentar obtener sus datos. |
+| 3 | No se valida si el nombre del cliente es nulo. | Puede generar un `NullPointerException` al ejecutar `trim()`. |
+| 4 | Se utiliza `gestiones.get(0)` sin comprobar si la lista contiene elementos. | Puede generar un `IndexOutOfBoundsException` cuando no existen gestiones. |
+| 5 | No se garantiza que la primera gestión corresponda a la más reciente. | Se podría devolver una fecha incorrecta si la lista no está ordenada. |
+
+Adicionalmente, considero importante validar el identificador recibido y establecer un manejo adecuado de las excepciones para evitar fallos inesperados durante la ejecución del servicio.
+=============================================================================================
+### 11. Proponga una corrección mínima y mantenible.
+
+
+Se propone utilizar `orElseThrow()` para controlar la inexistencia de la solicitud, validar los datos asociados y comprobar que existan gestiones antes de acceder a ellas.
+
+Mejoras implementadas:**
+
+- Se valida que el identificador de la solicitud no sea nulo.
+- Se controla la inexistencia de la solicitud mediante `orElseThrow()`.
+- Se valida que exista un cliente asociado.
+- Se comprueba que el nombre del cliente tenga información válida.
+- Se verifica que existan gestiones registradas.
+- Se obtiene la gestión con la fecha más reciente, evitando depender del orden de la lista.
+- Se implementa un manejo de excepciones que permite identificar las situaciones que impiden completar la consulta.
+
+Como mejora adicional, en un entorno productivo se recomienda utilizar excepciones personalizadas, como `SolicitudNoEncontradaException`, y centralizar el manejo de errores mediante 
+`@ControllerAdvice`, devolviendo respuestas HTTP apropiadas.
+================================================================================================
+### 12. Explique qué información debería quedar en logs y cuál no debería exponerse.
+
+Los logs deben permitir identificar, diagnosticar y realizar seguimiento a los errores que ocurren durante la ejecución del servicio, sin comprometer la seguridad ni la confidencialidad de la información.
+
+**Información que debería registrarse:**
+
+- Fecha y hora del evento.
+- Nombre del servicio o método donde se presenta el error.
+- Identificador de la solicitud, cuando sea necesario para realizar seguimiento.
+- Tipo de excepción presentada.
+- Mensaje técnico del error.
+- Stack trace en los registros internos, cuando corresponda.
+- Código de respuesta HTTP.
+- Identificador de correlación para facilitar la trazabilidad.
+
+**Información que no debería exponerse:**
+
+- Contraseñas o credenciales de acceso.
+- Tokens de autenticación.
+- Datos bancarios o financieros sensibles.
+- Información personal del cliente que no sea necesaria.
+- Números de documentos completos.
+- Información confidencial de la base de datos.
+- Consultas SQL que contengan información sensible.
+
+**Ejemplo de un log adecuado:**
+
+text
+2026-11-06 09:42:11 ERROR
+SolicitudService - Error consultando solicitud
+id=781245
+exception=SolicitudNoEncontradaException
+message=No se encontró la solicitud solicitada
+correlationId=abc123
+
+
+En conclusión, los logs internos deben contener información suficiente para identificar y solucionar los inconvenientes técnicos, mientras que las respuestas entregadas al usuario deben mostrar mensajes controlados, sin revelar detalles internos de la aplicación ni información confidencial.
+==================================================================================================
+
+## CONCLUSIÓN
+
+La revisión del método permitió identificar errores relacionados con el manejo de valores nulos, la validación de colecciones y la obtención de información sin garantizar su disponibilidad.
+
+La solución propuesta busca mejorar la estabilidad, legibilidad y mantenibilidad del código mediante validaciones, manejo adecuado de excepciones y buenas prácticas de registro de eventos.
+
+Considero que estas medidas son importantes para desarrollar servicios confiables, facilitar el diagnóstico de incidentes y garantizar la integridad y seguridad de la información.
