@@ -1,0 +1,195 @@
+1. Objetivo de las pruebas
+Respuesta para entregar:
+
+El objetivo de las pruebas es verificar que la corrección implementada en el método 
+consultar(Long id) permita consultar correctamente las solicitudes, controlar las 
+situaciones excepcionales y evitar errores relacionados con valores nulos o listas vacías.
+
+Para ello, se plantean pruebas automatizadas que validan tanto los escenarios normales
+ como los escenarios de error, utilizando JUnit 5 y Mockito para simular las respuestas 
+ de los repositorios sin depender de una conexión real a la base de datos.
+
+2. Casos de prueba propuestos
+Se plantean los siguientes escenarios:
+ID	    Escenario	Resultado esperado
+CP01	Solicitud existente con gestiones.	Retorna el DTO con los datos correctos y 
+        la gestión más reciente.
+CP02	Solicitud inexistente.	Genera una excepción controlada indicando que no 
+        existe la solicitud.
+CP03	Solicitud existente sin gestiones.	Genera una excepción controlada
+        indicando que no hay gestiones registradas.
+CP04	Solicitud sin cliente asociado.	Genera una excepción controlada sin 
+        producir un NullPointerException.
+CP05	Cliente con nombre nulo o vacío.	Rechaza la información y genera una
+        excepción controlada.
+CP06	Identificador nulo.	Genera una excepción de argumento inválido.
+CP07	Gestiones sin fecha válida.	Genera una excepción controlada porque no 
+         es posible determinar la última gestión.
+
+
+3. Descripción de los casos de prueba
+
+CP01. Solicitud existente con gestiones
+- Dato de entrada: identificador 781245.
+- Condición: existe la solicitud, tiene un cliente asociado y cuenta con varias 
+gestiones registradas.
+- Validación: comprobar que el DTO devuelva el identificador, nombre del cliente, 
+estado y fecha de la gestión más reciente.
+- Resultado esperado: consulta exitosa y retorno de la información correcta.
+
+CP02. Solicitud inexistente
+- Dato de entrada: identificador 999999.
+- Condición: el repositorio no encuentra una solicitud con ese identificador.
+- Validación: comprobar que se genere una excepción controlada.
+- Resultado esperado: no se produce un NullPointerException y se informa que la 
+solicitud no existe.
+
+CP03. Solicitud sin gestiones
+- Dato de entrada: identificador 781245.
+- Condición: la solicitud existe, pero el repositorio de gestiones devuelve una lista vacía.
+- Validación: comprobar que el servicio identifique que no existen gestiones.
+- Resultado esperado: se genera una excepción controlada y no se intenta 
+acceder a una posición inexistente de la lista.
+
+CP04. Solicitud sin cliente asociado
+- Dato de entrada: identificador 781245.
+- Condición: la solicitud existe, pero no tiene cliente asociado.
+- Validación: comprobar que se identifique la ausencia del cliente.
+- Resultado esperado: se genera una excepción controlada sin producir un 
+NullPointerException.
+
+CP05. Cliente con nombre inválido
+- Dato de entrada: identificador 781245.
+- Condición: el cliente existe, pero su nombre es nulo o está vacío.
+- Validación: comprobar que el servicio no intente ejecutar operaciones 
+sobre un nombre inexistente.
+- Resultado esperado: se genera una excepción controlada.
+
+CP06. Identificador nulo
+- Dato de entrada: null.
+- Condición: se invoca el método sin proporcionar un identificador.
+- Validación: comprobar que se rechace el argumento antes de consultar los repositorios.
+- Resultado esperado: se genera IllegalArgumentException.
+
+CP07. Gestiones sin fecha válida
+- Dato de entrada: identificador 781245.
+- Condición: existen gestiones, pero todas tienen la fecha nula.
+- Validación: comprobar que no se intente seleccionar una gestión sin fecha.
+- Resultado esperado: se genera una excepción controlada indicando 
+que no existen gestiones con fecha válida.
+
+4. Pruebas automatizadas con JUnit 5 y Mockito
+Para demostrar la corrección se propone utilizar:
+- JUnit 5: framework para ejecutar pruebas automatizadas.
+- Mockito: permite simular los repositorios y controlar las respuestas de las consultas.
+- Assertions: permiten verificar los resultados obtenidos y las excepciones esperadas.
+
+5. ¿Qué demuestra cada prueba?
+Prueba	Qué demuestra
+CP01	Que el servicio funciona correctamente y selecciona la gestión más reciente.
+CP02	Que el servicio controla la inexistencia de una solicitud.
+CP03	Que no se accede a posiciones inexistentes de una lista.
+CP04	Que se controla la ausencia del cliente.
+CP05	Que se validan los datos del cliente.
+CP06	Que se rechazan identificadores inválidos.
+CP07	Que no se seleccionan gestiones sin fecha válida.
+
+6.Documentación de decisiones técnicas
+Este apartado es importante porque IAS quiere conocer cómo analizas los problemas y 
+justificas tus decisiones.
+
+Respuesta para entregar:
+:::writing{variant="document" id="73183"}
+## Documentación de decisiones técnicas
+
+### Problema observado
+
+Se identificó un error `NullPointerException` en el método `consultar(Long id)`, 
+debido a que se intenta acceder a los datos de una solicitud que puede no existir 
+en la base de datos.
+
+Adicionalmente, se encontraron riesgos relacionados con la ausencia de validaciones 
+del cliente, el nombre y la lista de gestiones.
+
+### Hipótesis
+
+La principal hipótesis es que el identificador consultado no corresponde a un registro 
+existente, por lo que el repositorio devuelve un valor nulo mediante `orElse(null)`.
+
+También se considera posible que existan solicitudes sin cliente asociado o sin gestiones 
+registradas.
+
+### Alternativa elegida
+
+Se decidió implementar validaciones preventivas y utilizar `orElseThrow()` para 
+controlar la inexistencia de registros.
+
+También se agregó una validación de la lista de gestiones y se utilizó una 
+comparación por fecha para obtener la gestión más reciente.
+
+### Riesgos identificados
+
+- Que existan registros históricos con información incompleta.
+- Que algunas solicitudes no tengan gestiones asociadas.
+- Que existan gestiones sin fecha registrada.
+- Que las excepciones no sean manejadas adecuadamente por el controlador.
+
+### ¿Cómo validaría el cambio?
+
+Ejecutaría pruebas automatizadas utilizando JUnit 5 y Mockito para verificar los 
+escenarios normales y excepcionales.
+
+También revisaría los logs de la aplicación para confirmar que los errores se 
+registren correctamente y que no se exponga información sensible.
+
+### ¿Qué condición me haría cambiar de enfoque?
+
+Si las reglas del negocio establecen que una solicitud puede existir sin cliente o 
+sin gestiones, cambiaría el manejo de excepciones para permitir esos escenarios y 
+devolver información parcial cuando corresponda.
+
+Adicionalmente, si el volumen de gestiones es elevado, evaluaría realizar la consulta 
+directamente desde el repositorio mediante una consulta ordenada por fecha, 
+evitando recuperar todos los registros en memoria.
+
+8. Registro del uso de herramientas de inteligencia artificial
+Como la prueba permite utilizar IA, es importante declarar su 
+utilización de manera transparente.
+
+writing{variant="document" id="73184"}
+## Registro de uso de herramientas de inteligencia artificial
+Actividades en las que se utilizó:**
+
+-Análisis del fragmento de código Java para identificar posibles 
+errores y comprender las causas del inconveniente presentado.
+
+- Revisión de alternativas para solucionar errores relacionados con valores 
+nulos (`null`) y listas vacías.
+
+- Identificación de validaciones necesarias para evitar excepciones
+ como `NullPointerException` e `IndexOutOfBoundsException`.
+
+- Consulta de alternativas para el manejo adecuado de excepciones y 
+mejorar la estabilidad del servicio.
+
+- Apoyo en la organización y estructuración de la documentación técnica correspondiente 
+
+**Resultados obtenidos:**
+
+Se identificaron oportunidades de mejora en las validaciones del servicio, el manejo 
+de excepciones y la selección de la gestión más reciente.
+
+**Verificación realizada:**
+
+Se revisó la lógica propuesta y se plantearon escenarios de prueba para comprobar
+ los resultados esperados. Los ejemplos de pruebas deben ejecutarse y ajustarse 
+ al modelo real del proyecto antes de considerarse evidencia de ejecución.
+
+**Ajustes realizados:**
+
+Se revisaron las propuestas teniendo en cuenta la lógica del servicio, la necesidad 
+de proteger la información sensible y la importancia de mantener un código legible y 
+mantenible.
+
+La herramienta se utilizó como apoyo y las decisiones técnicas finales corresponden al 
+análisis y criterio del desarrollador.
